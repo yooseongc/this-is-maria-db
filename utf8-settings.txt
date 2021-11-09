@@ -1,0 +1,19 @@
+
+MariaDB 컨테이너 내부에서 /etc/mysql/my.cnf 파일에 아래를 추가 후 컨테이너 재시작.
+
+---
+
+[client]
+default-character-set = utf8mb4
+
+[mysql]
+default-character-set = utf8mb4
+
+[mysqld]
+collation-server = utf8_unicode_ci
+init-connect='SET NAMES utf8'
+character-set-server = utf8
+
+---
+
+확인은 mysql 콘솔에서 'status' 명령어로 확인 가능.
