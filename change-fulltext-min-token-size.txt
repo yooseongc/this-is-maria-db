@@ -1,0 +1,12 @@
+
+FULLTEXT 최소 토큰 사이즈를 2로 설정. (Default : 3)
+MariaDB 컨테이너 내부에서 /etc/mysql/my.cnf 파일에 아래를 추가 후 컨테이너 재시작.
+
+---
+
+[mysqld]
+innodb_ft_min_token_size=2
+
+---
+
+확인은 mysql 콘솔에서 'status' 명령어로 확인 가능.
