@@ -1,0 +1,98 @@
+
+## In my case,
+## host IP : 192.168.0.2
+## maria_1 IP : 172.17.0.4
+## maria_2 IP : 172.17.0.5
+## maria_3 IP : 172.17.0.6
+
+
+## install spider engine on maria_1
+apt-get update
+apt-get install vim
+apt-get install mariadb-plugin-spider
+mysql -u root -p < /usr/share/mysql/install_spider.sql
+
+mysql -u root -p
+############################## INSIDE MYSQL CLIENT ##############################
+
+## check and grant.
+> show engines;
+> create user 'yooseongc'@'%' identified by 'maria';
+> grant all privileges on *.* to 'yooseongc'@'%' with grant option;
+> flush privileges;
+
+## Create two servers.
+> create or replace server backend_1
+  foreign data wrapper mysql
+  Options(
+    HOST '192.168.0.2',
+    Database 'backend',
+    User 'spider_test',
+    Password 'test123',
+    Port 33062
+  );
+
+ > create or replace server backend_2
+   foreign data wrapper mysql
+   Options(
+      HOST '192.168.0.2',
+      Database 'backend',
+      User 'spider_test',
+      Password 'test123',
+      Port 33063
+  );
+
+## create sysbench table.
+> CREATE SCHEMA `backend` DEFAULT CHARACTER SET utf8;
+> create table backend.sbtest(
+    id int(10) not null auto_increment,
+    k int(10) not null default '0',
+    c char(120) not null default '',
+    pad char(60) not null default '',
+    primary key (id),
+    key k (k)
+) engine=spider comment='database "backend",table "sbtest"'
+Partition by key(id)(
+    Partition pr1 comment='srv "backend_1"',
+    Partition pr2 comment='srv "backend_2"'
+);
+
+> select * from mysql.servers;
+> select * from mysql.spider_tables;
+
+
+## create table on maria_2, maria_3
+
+$ docker exec -it maria_2 bash
+$ mysql -u root -p 
+> CREATE SCHEMA `backend` DEFAULT CHARACTER SET utf8;
+> create table backend.sbtest(
+    id int(10) not null auto_increment,
+    k int(10) not null default '0',
+    c char(120) not null default '',
+    pad char(60) not null default '',
+    primary key (id),
+    key k (k)
+) engine=innodb;
+> show engines;
+> create user 'spider_test'@'%' identified by 'test123';
+> grant all privileges on *.* to 'spider_test'@'%' with grant option;
+> flush privileges;
+
+$ docker exec -it maria_3 bash
+$ mysql -u root -p 
+> CREATE SCHEMA `backend` DEFAULT CHARACTER SET utf8;
+> create table backend.sbtest(
+    id int(10) not null auto_increment,
+    k int(10) not null default '0',
+    c char(120) not null default '',
+    pad char(60) not null default '',
+    primary key (id),
+    key k (k)
+) engine=innodb;
+> show engines;
+> create user 'spider_test'@'%' identified by 'test123';
+> grant all privileges on *.* to 'spider_test'@'%' with grant option;
+> flush privileges;
+
+## restart all docker containers
